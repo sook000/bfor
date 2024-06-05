@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ssafy.bfor.mypage.model.mapper.MyPageMapper">
+	<resultMap id="freeBoardRM" type="FreeBoardDto">
+		<result column="fb_no" property="fbNo"/>
+		<result column="user_id" property="userId"/>
+		<result column="category_id" property="categoryId"/>
+	</resultMap>
+	
+	<resultMap id="userRM" type="UserDto">
+		<result column="user_id" property="userId"/>
+		<result column="user_password" property="userPassword"/>
+		<result column="user_name" property="userName"/>
+		<result column="user_tel" property="userTel"/>
+		<result column="user_birth" property="userBirth"/>
+		<result column="user_email_id" property="userEmailId"/>
+		<result column="user_email_domain" property="userEmailDomain"/>
+		<result column="sido_code" property="sidoCode"/>
+		<result column="gugun_code" property="gugunCode"/>
+	</resultMap>
+	
+	<resultMap id="travelInfoRM" type="TravelInfoDto">
+		<result column="content_id" property="contentId" />
+		<result column="content_type_id" property="contentTypeId" />
+		<result column="favorit_cnt" property="favoritCnt" />
+		<result column="sido_code" property="sidoCode" />
+		<result column="gugun_code" property="gugunCode" />
+		<result column="first_image" property="firstImage" />
+		<result column="first_image2" property="firstImage2" />
+		
+	</resultMap>
+	<!-- 		<result column="profile_image" property="profileImage"/> -->
+	<resultMap id="attractionRouteBoardRM" type="TravelRouteBoardDto">
+		<result column="trb_no" property="trbNo" />
+		<result column="user_id" property="userId" />
+		<result column="favorite_count" property="favoriteCount" />
+		<result column="total_distance" property="totalDistance" />
+	</resultMap>
+	<select id="listFreeArticle" parameterType="string" resultMap="freeBoardRM">
+		select * from free_board
+		where user_id = #{userId}
+	</select>
+	
+	<select id="getSido" parameterType="string" resultType="string">
+		select sido_name from sido
+		where sido_code = #{sidoCode}
+	</select>
+	
+	<select id="getGugun" parameterType="map" resultType="string">
+		select gugun_name from gugun
+		where sido_code = #{sidoCode} and gugun_code = #{gugunCode}
+	</select>
+	
+	<update id="modifyUser" parameterType="userDto">
+		update user
+		set user_password = #{userPassword},
+			user_name = #{userName},
+			user_tel = #{userTel},
+			user_birth = #{userBirth},
+			user_email_id = #{userEmailId},
+			user_email_domain = #{userEmailDomain},
+			
+			sido_code = #{sidoCode},
+			gugun_code = #{gugunCode}
+		where user_id = #{userId}
+	</update>
+<!-- 	profile_image = #{profileImage}, -->
+	<!-- profile_image,  -->
+	<select id="getUserById" parameterType="string" resultMap="userRM">
+	    select user_id, user_password, user_name, user_tel, user_birth, user_email_id, user_email_domain, sido_code, gugun_code
+	    from user
+	    where user_id = #{userId}
+	</select>
+	
+	<delete id="deleteUser" parameterType="string">
+		delete from user
+		where user_id=#{userId}
+	</delete>
+	
+	<select id="listZzim" parameterType="string" resultMap="travelInfoRM">
+		select * from attraction_info as ai
+		join user_travelinfo_favorite as utf on ai.content_id = utf.content_id 
+		where user_id = #{userId}
+	</select>
+
+	
+	<!-- <select id="listroute" parameterType="string" resultMap="attractionRouteBoardRM">
+		SELECT *
+		FROM travel_route_board
+		WHERE user_id = #{userId}
+	</select> -->
+
+	<select id="getPlaceList" parameterType="string">
+		select content_id from user_travelinfo_favorite 
+		where user_id=#{userId};
+	</select> 
+	
+	<select id="listroute" parameterType="string" resultMap="attractionRouteBoardRM">
+        SELECT 
+            trb.*,
+            ai.first_image
+        FROM 
+            travel_route_board AS trb
+        JOIN 
+            travel_route_order AS tro ON tro.trb_no = trb.trb_no
+        JOIN 
+            attraction_info AS ai ON ai.content_id = tro.content_id
+        where tro.`order` = 1 and user_id = #{userId}
+    </select>
+</mapper>

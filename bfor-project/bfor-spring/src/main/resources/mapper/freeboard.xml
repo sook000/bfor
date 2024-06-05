@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ssafy.bfor.freeboard.model.mapper.FreeBoardMapper">
+	<resultMap id="freeBoardRM" type="FreeBoardDto">
+		<result column="fb_no" property="fbNo"/>
+		<result column="user_id" property="userId"/>
+		<result column="category_id" property="categoryId"/>
+	</resultMap>
+	
+	<resultMap id="freeBoardCommentRM" type="FreeBoardCommentDto">
+		<result column="cmt_no" property="cmtNo"/>
+		<result column="fb_no" property="fbNo"/>
+		<result column="user_id" property="userId"/>
+		<result column="cmt_content" property="cmtContent"/>
+	</resultMap>
+	
+	<sql id="search">
+		<if test="word != null and word != ''">
+			<if test="key == 'title'">
+				and title like concat('%', #{word}, '%')
+			</if>
+			<if test="key == 'user_id'">
+				and user_id like concat('%', #{word}, '%')
+			</if>
+			<if test="key == 'fb_no'">
+				and fb_no = #{word}
+			</if>
+		</if>
+		<if test="type != null and type != ''">
+			and category_id = #{type}
+		</if>
+		<if test="mypost != null and mypost != ''">
+			and user_id = #{mypost}
+		</if>
+	</sql>
+	
+	<select id="listArticle" parameterType="map"  resultMap="freeBoardRM">
+		select *
+		from free_board
+		<where>
+			<include refid="search"></include>
+		</where>
+		order by fb_no desc
+		limit #{start}, #{listsize}
+	</select>
+	
+	<select id="getTotalArticleCount" parameterType="map" resultType="int">
+		select count(fb_no)
+		from free_board
+		<where>
+			<include refid="search"></include>
+		</where>
+	</select>
+	
+	<select id="getArticle" parameterType="int" resultType="FreeBoardDto" resultMap="freeBoardRM">
+		SELECT * 
+		FROM free_board
+		WHERE fb_no=#{fbNo}
+	</select>
+	
+	<update id="updateHit" parameterType="int">
+		update free_board
+		set hit = hit + 1
+		where fb_no = #{articleNo}
+	</update>
+	
+	<update id="modifyArticle" parameterType="FreeBoardDto">
+		UPDATE free_board
+		SET title=#{title},
+			content=#{content},
+			category_id=#{categoryId}
+		WHERE user_id=#{userId} AND fb_no=#{fbNo}
+	</update>
+	
+	<insert id="writeArticle" parameterType="FreeBoardDto">
+		INSERT INTO free_board (user_id, title, content, category_id)
+		VALUES (#{userId}, #{title}, #{content}, #{categoryId})
+		<selectKey resultType="int" keyProperty="fbNo" order="AFTER">
+			select last_insert_id()
+		</selectKey>
+	</insert>
+	
+	<delete id="deleteArticle" parameterType="int">
+		DELETE FROM free_board
+		WHERE fb_no=#{fbNo}
+	</delete>
+	
+	<!--comment 관련 ======================================= -->
+	<select id="listComment" parameterType="int" resultType="FreeBoardCommentDto" resultMap="freeBoardCommentRM">
+		SELECT *
+		FROM free_board_comment
+		where fb_no=#{articleNo}
+		order by cmt_no desc
+	</select>
+	
+	<insert id="writeComment" parameterType="FreeBoardCommentDto">
+		INSERT INTO free_board_comment (fb_no, user_id, cmt_content)
+		VALUES (#{fbNo}, #{userId}, #{cmtContent})
+		<selectKey resultType="int" keyProperty="cmtNo" order="AFTER">
+			select last_insert_id()
+		</selectKey>
+	</insert>
+	
+	<update id="modifyComment" parameterType="FreeBoardCommentDto">
+		UPDATE free_board_comment
+		SET cmt_content=#{cmtContent}
+		WHERE user_id=#{userId} AND fb_no=#{fbNo} And cmt_no=#{cmtNo}
+	</update>
+	
+	<delete id="deleteComment" parameterType="map">
+		DELETE FROM free_board_comment
+		WHERE fb_no=#{fbNo} and cmt_no=#{cmtNo}
+	</delete>
+
+	<select id="countComment" parameterType="int" resultType="int">
+		SELECT count(*)
+		FROM free_board_comment
+		where fb_no=#{articleNo}
+	</select>
+</mapper>

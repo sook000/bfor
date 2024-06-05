@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper
+	namespace="com.ssafy.bfor.travelinfo.model.mapper.TravelInfoMapper">
+	<resultMap id="travelInfoRM" type="TravelInfoDto">
+		<result column="content_id" property="contentId" />
+		<result column="content_type_id" property="contentTypeId" />
+		<result column="favorit_cnt" property="favoritCnt" />
+		<result column="sido_code" property="sidoCode" />
+		<result column="gugun_code" property="gugunCode" />
+		<result column="first_image" property="firstImage" />
+		<result column="first_image2" property="firstImage2" />
+		
+	</resultMap>
+	<resultMap id="favoriteDtoRM" type="FavoriteDto">
+		<result column="content_id" property="contentId" />
+		<result column="user_id" property="userId" />
+	</resultMap>
+	<select id="getList" parameterType="map"
+		resultMap="travelInfoRM">
+		SELECT *
+		FROM attraction_info
+		WHERE title LIKE CONCAT('%', #{title}, '%')
+		<if test="sido != null and sido != ''">
+			AND sido_code = #{sido}
+		</if>
+		<if test="gugun != null and gugun != ''">
+			AND gugun_code = #{gugun}
+		</if>
+		<trim prefix="AND (" prefixOverrides="OR" suffix=")">
+			<if test="checkbox1 == 'true'">
+				OR content_type_id=12
+			</if>
+			<if test="checkbox2 == 'true'">
+				OR content_type_id=14
+			</if>
+			<if test="checkbox3 == 'true'">
+				OR content_type_id=15
+			</if>
+			<if test="checkbox4 == 'true'">
+				OR content_type_id=25
+			</if>
+			<if test="checkbox5 == 'true'">
+				OR content_type_id=28
+			</if>
+			<if test="checkbox6 == 'true'">
+				OR content_type_id=32
+			</if>
+			<if test="checkbox7 == 'true'">
+				OR content_type_id=38
+			</if>
+			<if test="checkbox8 == 'true'">
+				OR content_type_id=39
+			</if>
+		</trim>
+		LIMIT 30
+	</select>
+
+	<select id="detail" parameterType="int"
+		resultType="TravelInfoDto" resultMap="travelInfoRM">
+		select *
+		from attraction_info as ti
+		JOIN attraction_description as td ON ti.content_id = td.content_id
+		WHERE ti.content_id = #{contentId}
+		GROUP BY ti.content_id;
+	</select>
+
+	<select id="myFav" parameterType="String"
+		resultType="TravelInfoDto" resultMap="travelInfoRM">
+		SELECT *
+		FROM attraction_info
+		WHERE
+		content_id IN (
+			SELECT h.content_id
+			FROM user_travelinfo_favorite AS h
+			WHERE h.user_id = #{userId}
+		)
+		ORDER BY content_id ASC
+	</select>
+
+	<select id="getViewStatus" parameterType="map"
+		resultType="boolean">
+		SELECT COUNT(*) > 0
+		FROM user_travelinfo_favorite
+		WHERE content_id = #{contentId} AND user_id = #{userId}
+	</select>
+	
+	<insert id="insertFavorite" parameterType="map">
+		INSERT INTO user_travelinfo_favorite (user_id, content_id)
+		VALUES (#{userId}, #{contentId})
+	</insert>
+	<delete id="deleteFavorite" parameterType="map">
+		DELETE FROM
+		user_travelinfo_favorite
+		WHERE user_id = #{userId} AND
+		content_id=#{contentId}
+	</delete>
+
+	<select id="getBestList" parameterType="map"
+		resultType="TravelInfoDto" resultMap="travelInfoRM">
+		SELECT ti.*, count(ti.content_id) AS likes
+		FROM attraction_info AS ti
+		JOIN
+		user_travelinfo_favorite AS utf ON ti.content_id = utf.content_id
+		<where>
+			<if test="sido_code != null">
+				AND ti.sido_code = #{sido_code}
+			</if>
+			<if test="gugun_code != null">
+				AND ti.gugun_code = #{gugun_code}
+			</if>
+		</where>
+		GROUP BY ti.content_id
+		ORDER BY likes DESC
+		LIMIT 3;
+	</select>
+	<select id="getUserSidoGugunCode" resultType="map">
+		SELECT sido_code, gugun_code
+        FROM user
+        WHERE user_id = #{userId}
+	</select>
+</mapper>

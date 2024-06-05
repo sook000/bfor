@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper
+	namespace="com.ssafy.bfor.travelrouteboard.mapper.TravelRouteBoardMapper">
+	<resultMap id="attractionInfoRM" type="TravelInfoDto">
+		<result column="content_id" property="contentId" />
+		<result column="content_type_id" property="contentTypeId" />
+		<result column="favorit_cnt" property="favoritCnt" />
+		<result column="sido_code" property="sidoCode" />
+		<result column="gugun_code" property="gugunCode" />
+	</resultMap>
+	<resultMap id="attractionRouteBoardRM" type="TravelRouteBoardDto">
+		<result column="trb_no" property="trbNo" />
+		<result column="user_id" property="userId" />
+		<result column="favorite_count" property="favoriteCount" />
+		<result column="total_distance" property="totalDistance" />
+	</resultMap>
+	<resultMap id="attractionRouteBoardOrderRM" type="TravelRouteBoardOrderDto">
+		<result column="trb_no" property="trbNo"/>
+		<result column="contentId" property="content_id"/>
+	</resultMap>
+		
+	<insert id="insert" parameterType="TravelRouteBoardDto" useGeneratedKeys="true" keyProperty="trb_no">
+	    INSERT INTO travel_route_board (user_id, title, content, startdate, enddate, regdate)
+	    VALUES (#{userId}, #{title}, #{content}, #{startDate}, #{endDate}, now())
+	  </insert>
+
+	
+	<select id="read" parameterType="int" resultType="TravelRouteBoardDto"
+		resultMap="attractionRouteBoardRM">
+		SELECT *
+		FROM travel_route_board
+		WHERE trb_no = #{trbNo}
+	</select>
+	<select id="getList" resultType="TravelRouteBoardDto" resultMap="attractionRouteBoardRM">
+        SELECT 
+            trb.*,
+            ai.first_image
+        FROM 
+            travel_route_board AS trb
+        JOIN 
+            travel_route_order AS tro ON tro.trb_no = trb.trb_no
+        JOIN 
+            attraction_info AS ai ON ai.content_id = tro.content_id
+        <where>
+            tro.`order` = 1
+            <include refid="search"/>
+        </where>
+        ORDER BY trb_no DESC
+        LIMIT #{start}, #{listsize}
+    </select>
+	<select id="getTotalListCount" parameterType="map" resultType="int">
+		SELECT COUNT(trb_no)
+		FROM travel_route_board
+		<where>
+			<include refid="search"></include>
+		</where>
+	</select>
+
+	<update id="update" parameterType="map">
+		UPDATE travel_route_board
+		SET title = #{title}, content = #{content}, startdate = #{startdate}, enddate = #{enddate}, fixdate = now()
+		WHERE trb_no = #{trbNo} AND user_id = #{userId}
+	</update>
+	<delete id="delete" parameterType="int">
+		DELETE FROM travel_route_board
+		WHERE trb_no = #{trbNo}
+	</delete>
+
+	<sql id="search">
+		<choose>
+		    <when test="userId != null and userId != ''">
+		        AND user_id = #{userId}
+			    <if test="word != null and word != ''">
+			    	<choose>
+				        <when test="key == 'title'">
+				            AND title LIKE CONCAT('%', #{word}, '%')
+				        </when>
+				        <when test="key == 'user_id'">
+				            AND title LIKE CONCAT('%', #{word}, '%')
+				        </when>
+				        <otherwise>
+				        	AND title LIKE CONCAT('%', #{word}, '%')
+				        </otherwise>
+			    	</choose>
+			    </if>
+		    </when>
+	   	    <otherwise>
+	    		<if test="word != null and word != ''">
+			        <if test="key != 'user_id'">
+			            OR title LIKE CONCAT('%', #{word}, '%')
+			        </if>
+			        <if test="key != 'title'">
+			            OR user_id LIKE CONCAT('%', #{word}, '%')
+			        </if>
+			    </if>
+		    </otherwise>
+		</choose>
+	</sql>
+
+	<!-- 여행지 순서 -->
+	<insert id="insertTravelOrder" parameterType="map">
+	    INSERT INTO travel_route_order (trb_no, content_id, `order`)
+	    VALUES (#{trbNo}, #{contentId}, #{order})
+    </insert>
+    <select id="readTravelOrder" parameterType="int" resultType="TravelRouteBoardOrderDto" resultMap="attractionRouteBoardOrderRM">
+    	SELECT *
+    	FROM travel_route_order
+    	WHERE trb_no=#{trbNo}
+    </select>
+	<delete id="deleteTravelOrder" parameterType="int">
+		DELETE travel_route_order
+		WHERE trb_no = #{trbNo}
+	</delete>
+    <select id="getMaxTrbId" parameterType="string" resultType="int">
+		SELECT MAX(trb_no) FROM travel_route_Board WHERE user_id=#{userId};
+	</select>
+	
+	<select id="getOrderInfo" parameterType="int" resultType="TravelInfoDto" resultMap="attractionInfoRM">
+		SELECT ti.*
+		FROM travel_route_order AS tro JOIN attraction_info as ti ON tro.content_id = ti.content_id
+		WHERE trb_no = #{trbNo}
+		ORDER BY tro.order ASC;
+	</select>
+	
+
+</mapper>

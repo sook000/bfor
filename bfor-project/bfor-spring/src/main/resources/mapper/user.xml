@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ssafy.bfor.user.model.mapper.UserMapper">
+	<resultMap id="userRM" type="UserDto">
+		<result column="user_id" property="userId"/>
+		<result column="user_password" property="userPassword"/>
+		<result column="user_name" property="userName"/>
+		<result column="user_tel" property="userTel"/>
+		<result column="user_birth" property="userBirth"/>
+		<result column="user_email_id" property="userEmailId"/>
+		<result column="user_email_domain" property="userEmailDomain"/>
+		
+		<result column="sido_code" property="sidoCode"/>
+		<result column="gugun_code" property="gugunCode"/>
+	</resultMap>
+	<!-- <result column="profile_image" property="profileImage"/> -->
+	<resultMap id="sidoRM" type="SidoDto">
+		<result column="sido_code" property="sidoCode"/>
+		<result column="sido_name" property="sidoName"/>
+	</resultMap>
+	
+	<resultMap id="gugunRM" type="GugunDto">
+		<result column="sido_code" property="sidoCode"/>
+		<result column="gugun_code" property="gugunCode"/>
+		<result column="gugun_name" property="gugunName"/>
+	</resultMap>
+	<select id="checkId" parameterType="string" resultType="int">
+		select count(user_id) from user
+		where user_id = #{userId}
+	</select>
+	
+	<select id="getSido" resultType="SidoDto" resultMap="sidoRM">
+		select sido_name, sido_code from sido;
+	</select>
+	
+	<select id="getGugun" parameterType="int" resultType="GugunDto" resultMap="gugunRM">
+		select * from gugun
+		where sido_code = #{sido_code}
+	</select>
+	
+	<insert id="registerUser" parameterType="UserDto">
+		INSERT INTO user(user_id, user_password, user_name, user_tel, user_birth, user_email_id, user_email_domain, sido_code, gugun_code)
+		VALUES (#{userId}, #{userPassword}, #{userName}, #{userTel}, #{userBirth}, #{userEmailId}, #{userEmailDomain}, #{sidoCode}, #{gugunCode})
+	</insert>
+	
+	 <insert id="writeFile" parameterType="FileInfoDto">
+        insert into file_info (user_id, save_folder, original_file, save_file)
+        values (#{userId}, #{saveFolder}, #{originalFile}, #{saveFile})
+    </insert>
+    
+	<select id="login" parameterType="string" resultMap="userRM">
+		select user_id, user_password, user_name, token
+		from user
+		where user_id = #{userId}
+	</select>
+	
+	<update id="saveRefreshToken" parameterType="map">
+		update user
+		set token = #{token}
+		where user_id = #{userId}
+	</update>
+	
+	<select id="userInfo" parameterType="string" resultMap="userRM">
+		select user_id, user_password, user_name, user_tel, user_birth, user_email_id, user_email_domain, regdate, profile_image, sido_code, gugun_code
+		from user
+		where user_id = #{userId}
+	</select>
+	
+	<select id="getRefreshToken" parameterType="string" resultType="string">
+		select token
+		from user
+		where user_id = #{userId}
+	</select>
+	
+	<update id="deleteRefreshToken" parameterType="map">
+		update user
+		set token = #{token, jdbcType=VARCHAR}
+		where user_id = #{userId}
+	</update>
+	
+	<select id="findUserId" parameterType="map" resultType="UserDto" resultMap="userRM">
+		select user_id, user_name, user_tel
+		from user
+		where user_name=#{userName} and user_tel = #{userTel} 
+	</select>
+	
+	<select id="authUser" parameterType="map" resultType="UserDto" resultMap="userRM">
+		select *
+		from user
+		where user_id = #{userId} and user_name=#{userName} and user_tel = #{userTel} 
+	</select>
+	
+	<update id="modifyPwd" parameterType="userDto">
+		update user
+		set user_password = #{userPassword}
+		where user_id = #{userId}
+	</update>
+	
+	
+</mapper>

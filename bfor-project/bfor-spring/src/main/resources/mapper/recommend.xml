@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ssafy.bfor.recommend.model.mapper.RecommendMapper">
+<resultMap id="travelInfoRM" type="TravelInfoDto">
+		<result column="content_id" property="contentId" />
+		<result column="content_type_id" property="contentTypeId" />
+		<result column="favorit_cnt" property="favoritCnt" />
+		<result column="sido_code" property="sidoCode" />
+		<result column="gugun_code" property="gugunCode" />
+		<result column="first_image" property="firstImage" />
+		<result column="first_image2" property="firstImage2" />
+		
+	</resultMap>
+	<select id="userList">
+		select distinct user_id from user_travelinfo_favorite;
+	</select>
+	
+	<select id="getPlaceList" parameterType="string">
+		select content_id from user_travelinfo_favorite 
+		where user_id=#{userId};
+	</select>
+	
+	
+	<select id="getUserFavoriteType" parameterType="string">
+		select content_type_id from attraction_info as ai
+		join user_travelinfo_favorite as utf on ai.content_id = utf.content_id 
+		where user_id = #{userId}
+		group by content_type_id
+		order by count(*) desc
+		limit 1
+	</select>
+	
+	<select id="getFavContentTypePlaces" parameterType="int">
+		select content_id from attraction_info
+		where content_type_id = 12
+		limit 5, 5;
+	</select>
+	
+	<select id="getInfo" parameterType="string" resultMap="travelInfoRM">
+		select * from attraction_info
+		where content_id = #{place};
+	</select>
+</mapper>

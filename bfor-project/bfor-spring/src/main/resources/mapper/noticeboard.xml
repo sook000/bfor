@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ssafy.bfor.noticeboard.model.mapper.NoticeBoardMapper">
+	<resultMap id="noticeBoardRM" type="NoticeBoardDto">
+		<result column="notice_no" property="noticeNo"/>
+		<result column="admin_id" property="adminId"/>
+		<result column="notice_content" property="noticeContent"/>
+	</resultMap>
+	
+	<resultMap id="freeBoardRM" type="FreeBoardDto">
+		<result column="fb_no" property="fbNo"/>
+		<result column="user_id" property="userId"/>
+		<result column="category_id" property="categoryId"/>
+	</resultMap>
+	
+	<select id="listArticle" parameterType="map" resultMap="noticeBoardRM">
+		select * from notice_board
+		order by notice_no desc
+		limit #{start}, #{listsize}
+	</select>
+	
+	<select id="getTotalArticleCount" parameterType="map" resultType="int">
+		select count(notice_no)
+		from notice_board
+	</select>
+	
+	<select id="getArticle" parameterType="int" resultType="NoticeBoardDto" resultMap="noticeBoardRM">
+		SELECT * 
+		FROM notice_board
+		WHERE notice_no=#{noticeNo}
+	</select>
+	
+	<update id="modifyArticle" parameterType="NoticeBoardDto">
+		UPDATE notice_board
+		SET title=#{title},
+			notice_content=#{noticeContent}
+		WHERE notice_no=#{noticeNo}
+	</update>
+	
+	<insert id="writeArticle" parameterType="NoticeBoardDto">
+		INSERT INTO notice_board (admin_id, title, notice_content)
+		VALUES (#{adminId}, #{title}, #{noticeContent})
+		<selectKey resultType="int" keyProperty="noticeNo" order="AFTER">
+			select last_insert_id()
+		</selectKey>
+	</insert>
+	
+	<delete id="deleteArticle" parameterType="int">
+		DELETE FROM notice_board
+		WHERE notice_no=#{noticeNo}
+	</delete>
+</mapper>
